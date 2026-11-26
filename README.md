@@ -33,4 +33,4 @@ Nivel n empieza en 100·(n−1)² XP.
 - **VS Code:** prueba la API con Thunder Client o REST Client.
 
 ## Pendiente
-Rummikub y Klondike ya existen en el catálogo de la base de datos; falta su motor de juego en `public/js/juegos.js`.
+Rummikub ya existe en el catálogo de la base de datos; falta su motor de juego en `public/js/juegos.js`.

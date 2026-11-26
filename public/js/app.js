@@ -1,5 +1,5 @@
 import { api, sesion, guardarToken } from './api.js';
-import { INFO, crear, elegir, robar, libre, elegirSpider, repartir } from './juegos.js';
+import { INFO, crear, elegir, robar, libre, elegirSpider, repartir, clicKl, robarKl } from './juegos.js';
 
 const $ = s => document.querySelector(s);
 const el = (tag, txt = '', cls = '') => Object.assign(document.createElement(tag), { textContent: txt, className: cls });
@@ -125,6 +125,7 @@ const carta = (c, estilo = '', cls = '', attr = '') => c.up === false ? `<div cl
 
 function dibujar() {
   if (g.tipo === 'spider') return dibujarSpider();
+  if (g.tipo === 'klondike') return dibujarKlondike();
   const { filas, ancho, alto } = INFO[g.tipo], U = 34, top = g.desc.at(-1);
   const nodos = g.nodos.map((n, i) => n.fuera ? '' :
     carta(n.c, `left:${n.x * U}px;top:${n.r * alto}px;z-index:${n.r}`, `${libre(g, n) ? '' : 'tapada'} ${g.sel === n ? 'sel' : ''}`, `data-i="${i}"`)).join('');
@@ -137,8 +138,8 @@ function dibujar() {
   if (g.fin) terminar(g.fin);
 }
 
-function dibujarSpider() {
-  const cols = g.cols.map((col, ci) => {
+const columnasHtml = g => {
+  return g.cols.map((col, ci) => {
     let y = 0;
     const cartas = col.map((c, i) => {
       const t = y; y += c.up ? 26 : 14;
@@ -146,6 +147,24 @@ function dibujarSpider() {
     }).join('');
     return `<div class="col-sp" data-c="${ci}" style="height:${y + 88}px">${cartas}</div>`;
   }).join('');
+};
+
+function dibujarKlondike() {
+  const vis = g.dif === 'medio' ? g.desc.slice(-3) : g.desc.slice(-1), ult = vis.length - 1;
+  const desc = vis.map((c, k) => carta(c, `left:${k * 16}px;top:0`, k === ult && g.sel?.z === 'd' ? 'sel' : '', k === ult ? 'data-desc' : '')).join('');
+  const bases = g.base.map((b, p) => b.length ? carta(b.at(-1), '', '', 'data-b') : `<div class="carta vacia" data-b>${PALOS[p]}</div>`).join('');
+  $('#tablero').innerHTML = `<div class="d-flex align-items-start justify-content-center gap-4 mb-4 flex-wrap">
+      <div class="text-center" data-mazo>${g.mazo.length ? '<div class="carta dorso"></div>' : `<div class="carta vacia">${g.desc.length ? '↻' : ''}</div>`}
+        <small class="d-block">${g.mazo.length} cartas</small></div>
+      <div class="abanico">${desc}</div>
+      <div class="d-flex gap-2 ms-md-auto">${bases}</div></div>
+    <div class="d-flex justify-content-center gap-2">${columnasHtml(g)}</div>`;
+  $('#pts').textContent = g.pts;
+  if (g.fin) terminar(g.fin);
+}
+
+function dibujarSpider() {
+  const cols = columnasHtml(g);
   $('#tablero').innerHTML = `<div class="d-flex justify-content-center gap-2">${cols}</div>
     <div class="d-flex justify-content-center align-items-center gap-4 mt-4">
       <div class="text-center" data-mazo>${g.mazo.length ? '<div class="carta dorso"></div>' : '<div class="carta vacia"></div>'}
@@ -157,6 +176,14 @@ function dibujarSpider() {
 
 $('#tablero').addEventListener('click', ({ target }) => {
   if (!g || g.fin) return;
+  if (g.tipo === 'klondike') {
+    const col = target.closest('[data-c]'), c = target.closest('[data-i]');
+    if (target.closest('[data-mazo]')) robarKl(g);
+    else if (target.closest('[data-desc]')) clicKl(g, 'd');
+    else if (target.closest('[data-b]')) clicKl(g, 'b');
+    else if (col) clicKl(g, 'c', +col.dataset.c, c ? +c.dataset.i : -1);
+    return dibujar();
+  }
   if (g.tipo === 'spider') {
     if (target.closest('[data-mazo]')) {
       if (!repartir(g)) aviso(g.mazo.length ? 'Llena las columnas vacías antes de repartir' : 'Ya no quedan repartos');
