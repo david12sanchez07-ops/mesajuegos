@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE TABLE IF NOT EXISTS juegos (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  codigo    TEXT NOT NULL UNIQUE,          -- rummikub, klondike, spider, piramide, tripeaks
+  codigo    TEXT NOT NULL UNIQUE,          -- klondike, spider, piramide, tripeaks
   nombre    TEXT NOT NULL,
   categoria TEXT NOT NULL CHECK (categoria IN ('fichas','cartas'))
 );
@@ -56,7 +56,11 @@ CREATE TABLE IF NOT EXISTS estadisticas_usuario (
 
 -- ---------- DATOS INICIALES ----------
 INSERT OR IGNORE INTO juegos(codigo,nombre,categoria) VALUES
- ('rummikub','Rummikub','fichas'),('klondike','Klondike','cartas'),
- ('spider','Spider','cartas'),('piramide','Pirámide','cartas'),('tripeaks','TriPeaks','cartas');
+ ('klondike','Klondike','cartas'),('spider','Spider','cartas'),
+ ('piramide','Pirámide','cartas'),('tripeaks','TriPeaks','cartas');
+-- Rummikub quedó fuera del alcance: limpia el registro en bases de datos ya creadas (solo si no tiene partidas)
+DELETE FROM juegos WHERE codigo = 'rummikub'
+  AND id NOT IN (SELECT juego_id FROM partidas)
+  AND id NOT IN (SELECT juego_id FROM estadisticas_usuario);
 INSERT OR IGNORE INTO dificultades(codigo,nombre,mult_puntos,mult_xp) VALUES
  ('facil','Fácil',1.0,1.0),('medio','Medio',1.5,1.5);

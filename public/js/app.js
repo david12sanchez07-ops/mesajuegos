@@ -6,7 +6,6 @@ const el = (tag, txt = '', cls = '') => Object.assign(document.createElement(tag
 const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const RANGOS = 'A 2 3 4 5 6 7 8 9 10 J Q K'.split(' '), PALOS = ['♠', '♥', '♦', '♣'];
 const DESC = {
-  rummikub: ['🧩', 'Grupos y escaleras con fichas numeradas.'],
   klondike: ['♠', 'El clásico solitario de siete columnas.'],
   spider: ['🕷️', 'Ordena ocho secuencias de K a A.'],
   piramide: ['🔺', 'Suma 13 y despeja la pirámide.'],
@@ -91,7 +90,7 @@ async function perfil() {
 // ---------- Catálogo (viene de la API) ----------
 async function catalogo() {
   const juegos = await api('/juegos');
-  $('#catalogo').replaceChildren(...juegos.map(({ codigo, nombre }) => {
+  $('#catalogo').replaceChildren(...juegos.filter(j => j.codigo in INFO).map(({ codigo, nombre }) => {
     const [ico, desc] = DESC[codigo], col = el('div', '', 'col');
     // innerHTML es seguro aquí: son textos propios, no datos escritos por usuarios
     col.innerHTML = `<div class="card h-100 juego"><div class="card-body"><div class="display-5">${ico}</div>

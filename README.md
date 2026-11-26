@@ -29,8 +29,8 @@ Nivel n empieza en 100·(n−1)² XP.
 - **JavaScript ES6:** módulos (`import`/`export`), `async/await` con `fetch`, arrow functions, desestructuración, spread, template literals.
 - **DOM:** `querySelector`, `createElement`, `textContent` para datos de usuarios, delegación de eventos en el tablero.
 - **Bootstrap 5:** navbar, grid, cards, modal, toast, tablas y barra de progreso.
-- **Git/GitHub:** `.gitignore` incluido; trabaja con una rama por función (`feature/klondike`, `feature/rummikub`).
+- **Git/GitHub:** `.gitignore` incluido; trabaja con una rama por función (por ejemplo `feature/klondike`).
 - **VS Code:** prueba la API con Thunder Client o REST Client.
 
-## Pendiente
-Rummikub ya existe en el catálogo de la base de datos; falta su motor de juego en `public/js/juegos.js`.
+## Alcance
+Juegos incluidos: Pirámide, TriPeaks, Spider y Klondike, cada uno en dificultad Fácil y Medio. Rummikub quedó fuera del alcance de esta entrega.
