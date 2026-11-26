@@ -8,12 +8,15 @@ export const INFO = {
     ayuda: 'Retira parejas de cartas libres que sumen 13 (A=1, J=11, Q=12). El rey sale solo. Fácil: 2 reciclajes del mazo, Medio: 1.' },
   tripeaks: { nombre: 'TriPeaks', filas: 4, ancho: 18, alto: 52,
     ayuda: 'Retira cartas libres un valor arriba o abajo de la carta del descarte. Encadenar sube los puntos. Fácil: A y K se enlazan, Medio: no.' },
+  klondike: { nombre: 'Klondike',
+    ayuda: 'Arma columnas descendentes alternando color (rojo sobre negro). Solo un K puede ocupar una columna vacía. Lleva cada palo de A a K a las bases de arriba. Toca una carta y luego su destino; tócala de nuevo para enviarla a la base. Fácil: robas 1 carta, Medio: robas 3.' },
   spider: { nombre: 'Spider',
     ayuda: 'Mueve una carta o una secuencia del mismo palo sobre una carta de valor inmediatamente mayor (o a una columna vacía). Completa ocho secuencias de K a A. Fácil: 1 palo, Medio: 2 palos. Para repartir, ninguna columna puede estar vacía.' }
 };
 
 export function crear(tipo, dif) {
   if (tipo === 'spider') return crearSpider(dif);
+  if (tipo === 'klondike') return crearKlondike(dif);
   const mz = mazo();
   const filas = tipo === 'piramide'
     ? Array.from({ length: 7 }, (_, r) => Array.from({ length: r + 1 }, (_, i) => 6 - r + 2 * i))
@@ -106,4 +109,53 @@ function completar(g) {
     }
   });
   if (g.hechas === 8) { g.pts += 200; g.fin = 'ganada'; }
+}
+
+// ---------- Klondike: 7 columnas, mazo, descarte y 4 bases (una por palo) ----------
+function crearKlondike(dif) {
+  const mz = mazo().map(c => ({ ...c, up: false }));
+  const cols = Array.from({ length: 7 }, (_, i) => mz.splice(0, i + 1));
+  cols.forEach(c => { c.at(-1).up = true; });
+  return { tipo: 'klondike', dif, cols, mazo: mz, desc: [], base: [[], [], [], []], pts: 0, sel: null, fin: null };
+}
+
+const roja = c => c.s === 1 || c.s === 2;
+const cabe = (mov, dest) => dest ? roja(mov) !== roja(dest) && dest.r === mov.r + 1 : mov.r === 13;
+const secuenciaKl = (col, i) => col.slice(i).every((c, k, a) => c.up && (k === 0 || (roja(c) !== roja(a[k - 1]) && c.r === a[k - 1].r - 1)));
+
+function mover(g, s, origen, k, destino, pts) {
+  destino.push(...origen.splice(k));
+  g.pts += pts; g.sel = null;
+  const p = s.z === 'c' && origen.at(-1);
+  if (p && !p.up) { p.up = true; g.pts += 5; }
+  if (g.base.every(b => b.length === 13)) { g.pts += 200; g.fin = 'ganada'; }
+}
+
+// z: 'd' descarte, 'c' columna (ci, i = carta o -1 si está vacía), 'b' bases
+export function clicKl(g, z, ci = 0, i = -1) {
+  if (g.fin) return;
+  const s = g.sel;
+  if (s) {
+    const o = s.z === 'd' ? g.desc : g.cols[s.ci], k = s.z === 'd' ? o.length - 1 : s.i, mov = o.slice(k);
+    const mismo = z === s.z && (z === 'd' || (ci === s.ci && i === s.i));
+    if ((z === 'b' || mismo) && mov.length === 1) {
+      const base = g.base[mov[0].s];
+      if (mov[0].r === base.length + 1) return mover(g, s, o, k, base, 10);
+    }
+    if (z === 'c' && !(s.z === 'c' && ci === s.ci) && cabe(mov[0], g.cols[ci].at(-1)))
+      return mover(g, s, o, k, g.cols[ci], s.z === 'd' ? 5 : 0);
+    if (mismo) { g.sel = null; return; }
+  }
+  g.sel = null;
+  if (z === 'd' && g.desc.length) g.sel = { z: 'd' };
+  else if (z === 'c' && i >= 0 && secuenciaKl(g.cols[ci], i)) g.sel = { z: 'c', ci, i };
+}
+
+export function robarKl(g) {
+  if (g.fin) return;
+  g.sel = null;
+  if (g.mazo.length) {
+    const n = g.dif === 'facil' ? 1 : 3;
+    for (let k = 0; k < n && g.mazo.length; k++) { const c = g.mazo.pop(); c.up = true; g.desc.push(c); }
+  } else if (g.desc.length) { g.mazo = g.desc.reverse(); g.desc = []; }
 }
